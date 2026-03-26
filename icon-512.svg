@@ -1,0 +1,13 @@
+diff --git a/icon-512.svg b/icon-512.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc5dd23e436ebf9742d2354948f063c91002637a
+--- /dev/null
++++ b/icon-512.svg
+@@ -0,0 +1,7 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
++  <rect width="512" height="512" rx="72" fill="#2563eb"/>
++  <g fill="#ffffff" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle">
++    <text x="256" y="236" font-size="116">HR</text>
++    <text x="256" y="338" font-size="116">IT</text>
++  </g>
++</svg>
