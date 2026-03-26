@@ -1,0 +1,217 @@
+diff --git a/index.html b/index.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..c31685f4892d1f41e4e315bb27bcc9257c3e4048
+--- /dev/null
++++ b/index.html
+@@ -0,0 +1,211 @@
++<!doctype html>
++<html lang="de">
++  <head>
++    <meta charset="UTF-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <meta name="theme-color" content="#2563eb" />
++    <link rel="manifest" href="./manifest.webmanifest" />
++    <title>Organigram HR-IT</title>
++    <style>
++      :root {
++        color-scheme: light;
++      }
++      body {
++        margin: 0;
++        font-family: Arial, sans-serif;
++        background: #f5f7fb;
++        color: #1f2937;
++        min-height: 100vh;
++      }
++      .container {
++        max-width: 760px;
++        margin: 2rem auto;
++        padding: 0 1rem;
++      }
++      .card {
++        background: #fff;
++        padding: 1.25rem;
++        border-radius: 12px;
++        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
++      }
++      h1 {
++        margin-top: 0;
++      }
++      form {
++        display: grid;
++        gap: 0.75rem;
++        margin-bottom: 1rem;
++      }
++      label {
++        font-size: 0.95rem;
++        font-weight: 600;
++      }
++      input,
++      textarea,
++      button {
++        font: inherit;
++      }
++      input,
++      textarea {
++        width: 100%;
++        padding: 0.65rem;
++        border: 1px solid #cbd5e1;
++        border-radius: 8px;
++        box-sizing: border-box;
++      }
++      .actions {
++        display: flex;
++        gap: 0.5rem;
++        flex-wrap: wrap;
++      }
++      button {
++        border: 0;
++        border-radius: 8px;
++        padding: 0.6rem 0.9rem;
++        cursor: pointer;
++      }
++      .primary {
++        background: #2563eb;
++        color: white;
++      }
++      .muted {
++        background: #e2e8f0;
++        color: #0f172a;
++      }
++      ul {
++        list-style: none;
++        padding: 0;
++        margin: 1rem 0 0;
++        display: grid;
++        gap: 0.75rem;
++      }
++      li {
++        border: 1px solid #e2e8f0;
++        border-radius: 10px;
++        padding: 0.75rem;
++        background: #f8fafc;
++      }
++      .meta {
++        color: #475569;
++        font-size: 0.9rem;
++      }
++      code {
++        background: #eef2ff;
++        border-radius: 6px;
++        padding: 0.1rem 0.35rem;
++      }
++    </style>
++  </head>
++  <body>
++    <div class="container">
++      <main class="card">
++        <h1>Organigram HR-IT – Einträge (lokal auf Android speicherbar)</h1>
++        <p>
++          Diese App speichert Einträge persistent im Browser via
++          <code>localStorage</code> und kann als PWA auf Android installiert
++          werden (ohne Cloud, ohne Backend).
++        </p>
++
++        <form id="entry-form">
++          <div>
++            <label for="title">Titel</label>
++            <input id="title" name="title" required maxlength="120" />
++          </div>
++
++          <div>
++            <label for="note">Notiz</label>
++            <textarea id="note" name="note" rows="3" maxlength="2000"></textarea>
++          </div>
++
++          <div class="actions">
++            <button class="primary" type="submit">Eintrag speichern</button>
++            <button class="muted" type="button" id="clear-all">Alle löschen</button>
++          </div>
++        </form>
++
++        <p class="meta" id="storage-info"></p>
++        <ul id="entries"></ul>
++      </main>
++    </div>
++
++    <script>
++      const STORAGE_KEY = 'organigram_hr_it_entries_v1';
++      const form = document.getElementById('entry-form');
++      const entriesEl = document.getElementById('entries');
++      const infoEl = document.getElementById('storage-info');
++      const clearButton = document.getElementById('clear-all');
++
++      function loadEntries() {
++        const raw = localStorage.getItem(STORAGE_KEY);
++        if (!raw) return [];
++        try {
++          const parsed = JSON.parse(raw);
++          return Array.isArray(parsed) ? parsed : [];
++        } catch {
++          return [];
++        }
++      }
++
++      function saveEntries(entries) {
++        localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
++      }
++
++      function render() {
++        const entries = loadEntries();
++        entriesEl.innerHTML = '';
++
++        infoEl.textContent = `Gespeicherte Einträge: ${entries.length} · Speicher: localStorage (lokal auf Gerät)`;
++
++        if (entries.length === 0) {
++          const empty = document.createElement('li');
++          empty.textContent = 'Noch keine Einträge vorhanden.';
++          entriesEl.appendChild(empty);
++          return;
++        }
++
++        entries
++          .slice()
++          .reverse()
++          .forEach((entry) => {
++            const item = document.createElement('li');
++            item.innerHTML = `<strong>${entry.title}</strong><br><span>${entry.note || ''}</span><div class="meta">${new Date(entry.createdAt).toLocaleString('de-DE')}</div>`;
++            entriesEl.appendChild(item);
++          });
++      }
++
++      form.addEventListener('submit', (event) => {
++        event.preventDefault();
++        const formData = new FormData(form);
++        const title = String(formData.get('title') || '').trim();
++        const note = String(formData.get('note') || '').trim();
++
++        if (!title) return;
++
++        const entries = loadEntries();
++        entries.push({
++          id: crypto.randomUUID(),
++          title,
++          note,
++          createdAt: new Date().toISOString(),
++        });
++
++        saveEntries(entries);
++        form.reset();
++        render();
++      });
++
++      clearButton.addEventListener('click', () => {
++        localStorage.removeItem(STORAGE_KEY);
++        render();
++      });
++
++      if ('serviceWorker' in navigator) {
++        navigator.serviceWorker
++          .register('./sw.js')
++          .catch((error) => console.error('Service Worker Registrierung fehlgeschlagen:', error));
++      }
++
++      render();
++    </script>
++  </body>
++</html>
